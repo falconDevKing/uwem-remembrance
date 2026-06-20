@@ -506,7 +506,7 @@
   optionalDependencies:
     "@img/sharp-libvips-linux-x64" "1.2.4"
 
-"@img/sharp-linux-x64@0.35.2":
+"@img/sharp-linux-x64@0.35.2", "@img/sharp-linux-x64@^0.35.2":
   version "0.35.2"
   resolved "https://registry.yarnpkg.com/@img/sharp-linux-x64/-/sharp-linux-x64-0.35.2.tgz#ba3a1bfaec00ab394953f843f2fe8d59507d0826"
   integrity sha512-gi0zFJJRLswfCZmHtJdikXPOc5u7qamSOS3NHedLqLd4W8Q0NqjdBr6TTRIgsfFjqfTsHFgdfvJ9LwqSgcHiAA==
