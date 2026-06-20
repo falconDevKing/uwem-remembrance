@@ -1,36 +1,49 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Uwem Remembrance
 
-## Getting Started
+Next.js registration and event access application backed by Supabase Postgres.
 
-First, run the development server:
+## Configuration
+
+Copy `.env.example` to `.env.local` and provide the admin passwords, session
+secret, Supabase project URL, and Supabase publishable key.
+
+The current schema has no Row Level Security policies and grants the publishable
+key access to registration data. Add RLS policies before treating the key as a
+database authorization boundary.
+
+## Database
+
+The schema stores every attendee as a row in `registrations`. Extra persons are
+created by the application and linked to the primary registration through
+`linked_to_id`.
+
+For local development with Docker running:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+yarn db:start
+yarn db:reset
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+To apply migrations to a hosted Supabase project:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+yarn supabase link --project-ref YOUR_PROJECT_REF
+yarn db:push
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+The migration is schema-only and does not add demo attendees.
 
-## Learn More
+## Development
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+yarn dev
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Quality checks:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+yarn lint
+yarn build
+```
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Gate volunteers can sign in and search the attendee list at `/gate`.
