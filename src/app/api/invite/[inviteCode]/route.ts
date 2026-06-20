@@ -21,7 +21,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   const imageBuffer = await generateInviteImage(registration.full_name, verifyUrl);
 
   const fileName = `${registration.full_name} - Invite.jpeg`;
-  return new Response(imageBuffer, {
+  return new Response(new Uint8Array(imageBuffer), {
     headers: {
       "Content-Type": "image/jpeg",
       "Content-Disposition": `attachment; filename="${fileName}"`,
