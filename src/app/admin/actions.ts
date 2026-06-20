@@ -23,13 +23,12 @@ import type { ActionResponse } from "@/lib/types";
 
 export async function loginAction(prevState: ActionResponse, formData: FormData): Promise<ActionResponse> {
   const password = formData.get("password") as string;
-  console.log("process.env.ADMIN_PASSWORD", process.env.ADMIN_PASSWORD);
 
   if (!password) {
     return { success: false, message: "Password is required." };
   }
 
-  if (password !== process.env.ADMIN_PASSWORD) {
+  if (password !== process.env.NEXT_PUBLIC_ADMIN_PASSWORD) {
     return { success: false, message: "Incorrect password." };
   }
 

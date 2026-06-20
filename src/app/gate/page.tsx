@@ -27,7 +27,7 @@ export default async function GatePage(props: PageProps<"/gate">) {
         <div className="w-full max-w-md rounded-2xl border-t-4 border-gold bg-card p-8 shadow-lg">
           <p className="text-sm text-muted">Remembrance Event</p>
           <h1 className="mt-1 font-display text-2xl font-semibold text-foreground">Gate Check-in</h1>
-          <p className="mt-2 mb-6 text-sm text-muted">Sign in to search guests and record arrivals. {process.env.ADMIN_PASSWORD}</p>
+          <p className="mt-2 mb-6 text-sm text-muted">Sign in to search guests and record arrivals. - {process.env.NEXT_PUBLIC_GATE_PASSWORD}</p>
           <GateLoginForm />
           <Link href="/" className="mt-6 block text-center text-sm text-muted hover:text-gold">
             Back to public site

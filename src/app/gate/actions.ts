@@ -15,7 +15,7 @@ export async function gateDashboardLoginAction(
 ): Promise<ActionResponse> {
   const password = formData.get("password") as string;
   if (!password) return { success: false, message: "Password is required." };
-  if (password !== process.env.GATE_PASSWORD) {
+  if (password !== process.env.NEXT_PUBLIC_GATE_PASSWORD) {
     return { success: false, message: "Incorrect gate password." };
   }
 

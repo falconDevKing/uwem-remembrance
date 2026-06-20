@@ -11,8 +11,8 @@ const COOKIE_NAMES: Record<SessionRole, string> = {
 const MAX_AGE = 60 * 60 * 24; // 24 hours
 
 function getSecret(): string {
-  const secret = process.env.SESSION_SECRET;
-  if (!secret) throw new Error("SESSION_SECRET environment variable is required");
+  const secret = process.env.NEXT_PUBLIC_SESSION_SECRET;
+  if (!secret) throw new Error("NEXT_PUBLIC_SESSION_SECRET environment variable is required");
   return secret;
 }
 
