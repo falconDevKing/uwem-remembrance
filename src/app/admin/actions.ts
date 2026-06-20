@@ -21,11 +21,9 @@ import { INVITED_BY_OPTIONS } from "@/lib/event-options";
 import type { InvitedBy } from "@/lib/event-options";
 import type { ActionResponse } from "@/lib/types";
 
-export async function loginAction(
-  prevState: ActionResponse,
-  formData: FormData
-): Promise<ActionResponse> {
+export async function loginAction(prevState: ActionResponse, formData: FormData): Promise<ActionResponse> {
   const password = formData.get("password") as string;
+  console.log("process.env.ADMIN_PASSWORD", process.env.ADMIN_PASSWORD);
 
   if (!password) {
     return { success: false, message: "Password is required." };
@@ -44,10 +42,7 @@ export async function logoutAction(): Promise<void> {
   redirect("/admin/login");
 }
 
-export async function checkInGuestAction(
-  prevState: ActionResponse,
-  formData: FormData
-): Promise<ActionResponse> {
+export async function checkInGuestAction(prevState: ActionResponse, formData: FormData): Promise<ActionResponse> {
   const session = await verifySession();
   if (!session.authenticated) redirect("/admin/login");
 
@@ -70,10 +65,7 @@ export async function checkInGuestAction(
   return { success: true, message: "Guest checked in successfully." };
 }
 
-export async function uncheckInGuestAction(
-  prevState: ActionResponse,
-  formData: FormData
-): Promise<ActionResponse> {
+export async function uncheckInGuestAction(prevState: ActionResponse, formData: FormData): Promise<ActionResponse> {
   const session = await verifySession();
   if (!session.authenticated || session.role !== "admin") {
     redirect("/admin/login");
@@ -98,10 +90,7 @@ export async function uncheckInGuestAction(
   return { success: true, message: "Check-in undone." };
 }
 
-export async function deleteRegistrationAction(
-  prevState: ActionResponse,
-  formData: FormData
-): Promise<ActionResponse> {
+export async function deleteRegistrationAction(prevState: ActionResponse, formData: FormData): Promise<ActionResponse> {
   const session = await verifySession();
   if (!session.authenticated || session.role !== "admin") {
     redirect("/admin/login");
@@ -125,10 +114,7 @@ export async function deleteRegistrationAction(
   return { success: true, message: "Registration marked as deleted." };
 }
 
-export async function restoreRegistrationAction(
-  prevState: ActionResponse,
-  formData: FormData
-): Promise<ActionResponse> {
+export async function restoreRegistrationAction(prevState: ActionResponse, formData: FormData): Promise<ActionResponse> {
   const session = await verifySession();
   if (!session.authenticated || session.role !== "admin") {
     redirect("/admin/login");
@@ -149,10 +135,7 @@ export async function restoreRegistrationAction(
   return { success: true, message: "Registration restored." };
 }
 
-export async function updateTableAction(
-  prevState: ActionResponse,
-  formData: FormData
-): Promise<ActionResponse> {
+export async function updateTableAction(prevState: ActionResponse, formData: FormData): Promise<ActionResponse> {
   const session = await verifySession();
   if (!session.authenticated || session.role !== "admin") {
     redirect("/admin/login");
@@ -208,10 +191,7 @@ export async function updateTableAction(
   return { success: true, message: "Table assignment updated." };
 }
 
-export async function updateNotesAction(
-  prevState: ActionResponse,
-  formData: FormData
-): Promise<ActionResponse> {
+export async function updateNotesAction(prevState: ActionResponse, formData: FormData): Promise<ActionResponse> {
   const session = await verifySession();
   if (!session.authenticated || session.role !== "admin") {
     redirect("/admin/login");
@@ -236,10 +216,7 @@ export async function updateNotesAction(
   return { success: true, message: "Notes updated." };
 }
 
-export async function updateInvitedByAction(
-  prevState: ActionResponse,
-  formData: FormData
-): Promise<ActionResponse> {
+export async function updateInvitedByAction(prevState: ActionResponse, formData: FormData): Promise<ActionResponse> {
   const session = await verifySession();
   if (!session.authenticated || session.role !== "admin") {
     redirect("/admin/login");
@@ -264,10 +241,7 @@ export async function updateInvitedByAction(
   return { success: true, message: "Invited-by assignment updated for the group." };
 }
 
-export async function updateAttendanceAction(
-  prevState: ActionResponse,
-  formData: FormData
-): Promise<ActionResponse> {
+export async function updateAttendanceAction(prevState: ActionResponse, formData: FormData): Promise<ActionResponse> {
   const session = await verifySession();
   if (!session.authenticated || session.role !== "admin") {
     redirect("/admin/login");
@@ -288,16 +262,11 @@ export async function updateAttendanceAction(
   revalidatePath(`/admin/registrations/${id}`);
   return {
     success: true,
-    message: attendanceConfirmed
-      ? "Guest marked as attending."
-      : "Guest marked as unable to attend.",
+    message: attendanceConfirmed ? "Guest marked as attending." : "Guest marked as unable to attend.",
   };
 }
 
-export async function createGuestAction(
-  prevState: ActionResponse,
-  formData: FormData
-): Promise<ActionResponse> {
+export async function createGuestAction(prevState: ActionResponse, formData: FormData): Promise<ActionResponse> {
   const session = await verifySession();
   if (!session.authenticated || session.role !== "admin") {
     redirect("/admin/login");

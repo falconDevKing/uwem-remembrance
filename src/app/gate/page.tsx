@@ -9,7 +9,7 @@ import { gateDashboardLogoutAction } from "./actions";
 const PAGE_SIZE = 20;
 
 function firstValue(value: string | string[] | undefined): string {
-  return Array.isArray(value) ? value[0] ?? "" : value ?? "";
+  return Array.isArray(value) ? (value[0] ?? "") : (value ?? "");
 }
 
 function parsePage(value: string): number {
@@ -19,21 +19,15 @@ function parsePage(value: string): number {
 
 export default async function GatePage(props: PageProps<"/gate">) {
   const session = await verifySession();
-  const canAccess =
-    session.authenticated &&
-    (session.role === "gate" || session.role === "admin");
+  const canAccess = session.authenticated && (session.role === "gate" || session.role === "admin");
 
   if (!canAccess) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-background px-4 py-10">
         <div className="w-full max-w-md rounded-2xl border-t-4 border-gold bg-card p-8 shadow-lg">
           <p className="text-sm text-muted">Remembrance Event</p>
-          <h1 className="mt-1 font-display text-2xl font-semibold text-foreground">
-            Gate Check-in
-          </h1>
-          <p className="mt-2 mb-6 text-sm text-muted">
-            Sign in to search guests and record arrivals.
-          </p>
+          <h1 className="mt-1 font-display text-2xl font-semibold text-foreground">Gate Check-in</h1>
+          <p className="mt-2 mb-6 text-sm text-muted">Sign in to search guests and record arrivals. {process.env.ADMIN_PASSWORD}</p>
           <GateLoginForm />
           <Link href="/" className="mt-6 block text-center text-sm text-muted hover:text-gold">
             Back to public site
@@ -65,23 +59,15 @@ export default async function GatePage(props: PageProps<"/gate">) {
         <header className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <p className="text-sm text-muted">Remembrance Event</p>
-            <h1 className="font-display text-3xl font-semibold text-foreground">
-              Gate Check-in
-            </h1>
+            <h1 className="font-display text-3xl font-semibold text-foreground">Gate Check-in</h1>
           </div>
           {session.role === "admin" ? (
-            <Link
-              href="/admin"
-              className="rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium"
-            >
+            <Link href="/admin" className="rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium">
               Back to Admin
             </Link>
           ) : (
             <form action={gateDashboardLogoutAction}>
-              <button
-                type="submit"
-                className="rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium"
-              >
+              <button type="submit" className="rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium">
                 Sign Out
               </button>
             </form>
