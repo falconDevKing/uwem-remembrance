@@ -53,14 +53,10 @@ export default function RegistrationForm() {
         <label className="mb-1.5 block text-sm font-medium">
           WhatsApp Number <span className="text-error">*</span>
         </label>
-        <PhoneInput
-          name="phoneNumber"
-          required
-          placeholder="Enter your WhatsApp number"
-        />
+        <PhoneInput name="phoneNumber" required placeholder="Enter your WhatsApp number" />
       </div>
 
-      <div>
+      {/* <div>
         <label htmlFor="email" className="mb-1.5 block text-sm font-medium">
           Email Address <span className="text-xs font-normal text-muted">(Optional)</span>
         </label>
@@ -71,7 +67,7 @@ export default function RegistrationForm() {
           placeholder="Enter your email address"
           className="w-full rounded-lg border border-border bg-white px-4 py-3 text-foreground placeholder:text-muted/60 focus:border-gold focus:outline-none focus:ring-2 focus:ring-gold/30"
         />
-      </div>
+      </div> */}
 
       <div>
         <span className="mb-2 block text-sm font-medium">Extra Persons Attending With You</span>
@@ -118,10 +114,7 @@ export default function RegistrationForm() {
               <label className="mb-1.5 block text-sm font-medium">
                 Phone Number <span className="text-xs font-normal text-muted">(Optional)</span>
               </label>
-              <PhoneInput
-                name={`extraPersons[${i}].phoneNumber`}
-                placeholder="Enter phone number"
-              />
+              <PhoneInput name={`extraPersons[${i}].phoneNumber`} placeholder="Enter phone number" />
             </div>
           </div>
         </fieldset>
