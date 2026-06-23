@@ -66,12 +66,23 @@ export default async function AdminDashboardPage(
         <h1 className="font-display text-2xl font-semibold text-foreground">
           Dashboard
         </h1>
-        <Link
-          href="/api/admin/export"
-          className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-muted transition-colors hover:border-gold hover:text-gold"
-        >
-          Export CSV
-        </Link>
+        <div className="flex gap-2">
+          <Link
+            href="/admin"
+            className="rounded-lg border border-border px-3 py-2 text-sm text-muted transition-colors hover:border-gold hover:text-gold"
+            title="Refresh data"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182M21.015 4.356v4.992" />
+            </svg>
+          </Link>
+          <Link
+            href="/api/admin/export"
+            className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-muted transition-colors hover:border-gold hover:text-gold"
+          >
+            Export CSV
+          </Link>
+        </div>
       </div>
 
       <SummaryCards stats={stats} />

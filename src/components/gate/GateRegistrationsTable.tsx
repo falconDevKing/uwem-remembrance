@@ -1,7 +1,8 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState, useRef } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { gateDashboardCheckInAction } from "@/app/gate/actions";
 import type { ActionResponse, RegistrationListItem } from "@/lib/types";
 
@@ -30,24 +31,29 @@ export default function GateRegistrationsTable({
   totalPages: number;
   query: string;
 }) {
+  const router = useRouter();
+  const [searchValue, setSearchValue] = useState(query);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [state, checkInAction, pending] = useActionState(gateDashboardCheckInAction, initialState);
   const first = total === 0 ? 0 : (page - 1) * pageSize + 1;
   const last = Math.min(page * pageSize, total);
 
   return (
     <div className="space-y-4">
-      <form action="/gate" method="get" className="flex gap-2">
-        <input
-          type="search"
-          name="q"
-          defaultValue={query}
-          placeholder="Search name or invite code..."
-          className="min-w-0 flex-1 rounded-lg border border-border bg-white px-4 py-3 focus:border-gold focus:outline-none focus:ring-2 focus:ring-gold/30"
-        />
-        <button type="submit" className="rounded-lg bg-foreground px-5 py-3 font-medium text-white">
-          Search
-        </button>
-      </form>
+      <input
+        type="search"
+        value={searchValue}
+        onChange={(e) => {
+          const value = e.target.value;
+          setSearchValue(value);
+          if (debounceRef.current) clearTimeout(debounceRef.current);
+          debounceRef.current = setTimeout(() => {
+            router.replace(gateHref(1, value), { scroll: false });
+          }, 300);
+        }}
+        placeholder="Search name or invite code..."
+        className="w-full rounded-lg border border-border bg-white px-4 py-3 focus:border-gold focus:outline-none focus:ring-2 focus:ring-gold/30"
+      />
 
       {state.message && (
         <p role="status" className={`rounded-lg px-4 py-3 text-sm ${state.success ? "bg-green-50 text-green-700" : "bg-red-50 text-error"}`}>

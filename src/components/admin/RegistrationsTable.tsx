@@ -1,7 +1,8 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useState, useRef } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { checkInGuestAction, deleteRegistrationAction, restoreRegistrationAction, updateAttendanceAction } from "@/app/admin/actions";
 import type { ActionResponse, RegistrationListItem, RegistrationStatusFilter } from "@/lib/types";
 
@@ -67,6 +68,9 @@ export default function RegistrationsTable({
   withNotes: boolean;
   siteUrl: string;
 }) {
+  const router = useRouter();
+  const [searchValue, setSearchValue] = useState(query);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [downloadingCode, setDownloadingCode] = useState<string | null>(null);
   const [, checkInAction, checkInPending] = useActionState(checkInGuestAction, initialState);
   const [, deleteAction, deletePending] = useActionState(deleteRegistrationAction, initialState);
@@ -78,20 +82,20 @@ export default function RegistrationsTable({
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <form action="/admin" method="get" className="flex w-full gap-2 sm:max-w-md">
-          <input
-            type="search"
-            name="q"
-            defaultValue={query}
-            placeholder="Search by name or phone..."
-            className="min-w-0 flex-1 rounded-lg border border-border bg-white px-4 py-2 text-sm text-foreground placeholder:text-muted/60 focus:border-gold focus:outline-none focus:ring-2 focus:ring-gold/30"
-          />
-          {status !== "all" && <input type="hidden" name="status" value={status} />}
-          {withNotes && <input type="hidden" name="notes" value="with" />}
-          <button type="submit" className="rounded-lg bg-gold-dark px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-gold">
-            Search
-          </button>
-        </form>
+        <input
+          type="search"
+          value={searchValue}
+          onChange={(e) => {
+            const value = e.target.value;
+            setSearchValue(value);
+            if (debounceRef.current) clearTimeout(debounceRef.current);
+            debounceRef.current = setTimeout(() => {
+              router.replace(adminHref({ page: 1, query: value, status, withNotes }), { scroll: false });
+            }, 300);
+          }}
+          placeholder="Search by name or phone..."
+          className="w-full rounded-lg border border-border bg-white px-4 py-2 text-sm text-foreground placeholder:text-muted/60 focus:border-gold focus:outline-none focus:ring-2 focus:ring-gold/30 sm:max-w-md"
+        />
 
         <div className="flex flex-wrap gap-2">
           {(["all", "checked_in", "not_checked_in", "unable", "deleted"] as const).map((filter) => (
