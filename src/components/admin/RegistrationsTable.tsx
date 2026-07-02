@@ -3,7 +3,7 @@
 import { useActionState, useState, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { checkInGuestAction, deleteRegistrationAction, restoreRegistrationAction, updateAttendanceAction } from "@/app/admin/actions";
+import { checkInGuestAction, deleteRegistrationAction, restoreRegistrationAction, updateAttendanceAction, markInviteSentAction } from "@/app/admin/actions";
 import type { ActionResponse, RegistrationListItem, RegistrationStatusFilter } from "@/lib/types";
 
 const initialState: ActionResponse = { success: false, message: "" };
@@ -14,19 +14,23 @@ function buildWhatsAppUrl(reg: RegistrationListItem): string {
     "",
     "You are warmly invited to the Remembrance Ceremony of Dr. (Mrs.) Uwem Oyekan.",
     "",
-    "Date: Saturday, July 4th, 2026",
-    "Time: 11:00 AM",
-    "Venue: Amen Event Center, Abesan Estate Gate, Ipaja, Lagos.",
+    "*Date*: Saturday, July 4th, 2026",
+    "*Time*: 11:00 AM",
+    "*Venue*: Amen Event Center, Abesan Estate Gate, Ipaja, Lagos.",
     "",
-    `Your personal access code is: ${reg.invite_code}`,
+    `Your personal access code is: _${reg.invite_code}_`,
     "",
     "Kindly present your personalised invite or access code to the access team upon arrival.",
+    "",
+    "To aid your movement, you can click on this link below to set your navigation to the venue:",
+    "https://share.google/CiTIcCGUWKUZs4PGi",
+    "",
     "",
     "We look forward to receiving you.",
   ].join("\n");
 
   const encoded = encodeURIComponent(message);
-  const phone = reg.phone_number?.replace(/\D/g, "");
+  const phone = (reg.phone_number || reg.source_phone)?.replace(/\D/g, "");
   return phone ? `https://wa.me/${phone}?text=${encoded}` : `https://wa.me/?text=${encoded}`;
 }
 
@@ -46,6 +50,13 @@ function adminHref({ page, query, status, withNotes }: { page: number; query: st
   if (withNotes) params.set("notes", "with");
   const queryString = params.toString();
   return queryString ? `/admin?${queryString}` : "/admin";
+}
+
+function getRowAccent(reg: RegistrationListItem): string {
+  if (reg.checked_in) return "border-l-green-500";
+  if (reg.invite_sent) return "border-l-amber-400";
+  if (!reg.attendance_confirmed) return "border-l-red-400";
+  return "border-l-transparent";
 }
 
 export default function RegistrationsTable({
@@ -76,6 +87,7 @@ export default function RegistrationsTable({
   const [, deleteAction, deletePending] = useActionState(deleteRegistrationAction, initialState);
   const [, attendanceAction, attendancePending] = useActionState(updateAttendanceAction, initialState);
   const [, restoreAction, restorePending] = useActionState(restoreRegistrationAction, initialState);
+  const [, inviteSentAction, inviteSentPending] = useActionState(markInviteSentAction, initialState);
   const firstResult = total === 0 ? 0 : (page - 1) * pageSize + 1;
   const lastResult = Math.min(page * pageSize, total);
 
@@ -136,15 +148,9 @@ export default function RegistrationsTable({
       {/* Mobile: Card layout */}
       <div className="space-y-3 md:hidden">
         {registrations.map((registration) => (
-          <div
-            key={registration.id}
-            className="rounded-xl border border-border bg-card shadow-sm"
-          >
+          <div key={registration.id} className={`rounded-xl border border-border bg-card shadow-sm border-l-4 ${getRowAccent(registration)}`}>
             <div className="flex items-center justify-between gap-2 border-b border-border px-4 py-3">
-              <Link
-                href={`/admin/registrations/${registration.id}`}
-                className="font-medium text-foreground hover:text-gold"
-              >
+              <Link href={`/admin/registrations/${registration.id}`} className="font-medium text-foreground hover:text-gold">
                 {registration.full_name}
               </Link>
               <div className="flex gap-1.5">
@@ -175,7 +181,9 @@ export default function RegistrationsTable({
                     <span className="inline-flex items-center gap-1">
                       {registration.phone_number}
                       {registration.duplicate_phone && (
-                        <span className="inline-flex h-3.5 w-3.5 items-center justify-center rounded-full bg-amber-100 text-[9px] font-bold text-amber-700">!</span>
+                        <span className="inline-flex h-3.5 w-3.5 items-center justify-center rounded-full bg-amber-100 text-[9px] font-bold text-amber-700">
+                          !
+                        </span>
                       )}
                     </span>
                   ) : (
@@ -217,7 +225,10 @@ export default function RegistrationsTable({
                       setDownloadingCode(registration.invite_code);
                       try {
                         const res = await fetch(`/api/invite/${registration.invite_code}`);
-                        if (!res.ok) { alert("Failed to generate invite"); return; }
+                        if (!res.ok) {
+                          alert("Failed to generate invite");
+                          return;
+                        }
                         const blob = await res.blob();
                         const url = URL.createObjectURL(blob);
                         const a = document.createElement("a");
@@ -225,11 +236,13 @@ export default function RegistrationsTable({
                         a.download = `${registration.full_name} - Invite.jpeg`;
                         a.click();
                         URL.revokeObjectURL(url);
-                      } finally { setDownloadingCode(null); }
+                      } finally {
+                        setDownloadingCode(null);
+                      }
                     }}
                     className="rounded-lg border border-gold-light px-3 py-1.5 text-xs font-medium text-gold-dark hover:bg-gold-light disabled:opacity-50"
                   >
-                    {downloadingCode === registration.invite_code ? "..." : "Invite"}
+                    {downloadingCode === registration.invite_code ? "..." : "Download Invite"}
                   </button>
                   <button
                     type="button"
@@ -238,12 +251,31 @@ export default function RegistrationsTable({
                   >
                     Share
                   </button>
+                  <form action={inviteSentAction}>
+                    <input type="hidden" name="id" value={registration.id} />
+                    <input type="hidden" name="sent" value={registration.invite_sent ? "false" : "true"} />
+                    <button
+                      type="submit"
+                      disabled={inviteSentPending}
+                      className={`rounded-lg px-3 py-1.5 text-xs font-medium disabled:opacity-50 ${
+                        registration.invite_sent
+                          ? "border border-green-200 bg-green-50 text-green-700 hover:bg-white"
+                          : "border border-border text-muted hover:border-gold hover:text-gold"
+                      }`}
+                    >
+                      {registration.invite_sent ? "✓ Sent" : "Mark Sent"}
+                    </button>
+                  </form>
                 </>
               )}
               {registration.deleted ? (
                 <form action={restoreAction}>
                   <input type="hidden" name="id" value={registration.id} />
-                  <button type="submit" disabled={restorePending} className="rounded-lg bg-green-50 px-3 py-1.5 text-xs font-medium text-green-700 disabled:opacity-50">
+                  <button
+                    type="submit"
+                    disabled={restorePending}
+                    className="rounded-lg bg-green-50 px-3 py-1.5 text-xs font-medium text-green-700 disabled:opacity-50"
+                  >
                     Restore
                   </button>
                 </form>
@@ -252,7 +284,11 @@ export default function RegistrationsTable({
                   {registration.attendance_confirmed && !registration.checked_in && (
                     <form action={checkInAction}>
                       <input type="hidden" name="id" value={registration.id} />
-                      <button type="submit" disabled={checkInPending} className="rounded-lg bg-green-50 px-3 py-1.5 text-xs font-medium text-green-600 disabled:opacity-50">
+                      <button
+                        type="submit"
+                        disabled={checkInPending}
+                        className="rounded-lg bg-green-50 px-3 py-1.5 text-xs font-medium text-green-600 disabled:opacity-50"
+                      >
                         Check In
                       </button>
                     </form>
@@ -260,13 +296,26 @@ export default function RegistrationsTable({
                   <form action={attendanceAction}>
                     <input type="hidden" name="id" value={registration.id} />
                     <input type="hidden" name="attendanceConfirmed" value={registration.attendance_confirmed ? "false" : "true"} />
-                    <button type="submit" disabled={attendancePending} className="rounded-lg px-3 py-1.5 text-xs font-medium text-amber-700 hover:bg-amber-50 disabled:opacity-50">
+                    <button
+                      type="submit"
+                      disabled={attendancePending}
+                      className="rounded-lg px-3 py-1.5 text-xs font-medium text-amber-700 hover:bg-amber-50 disabled:opacity-50"
+                    >
                       {registration.attendance_confirmed ? "Not Attending" : "To Attend"}
                     </button>
                   </form>
-                  <form action={deleteAction} onSubmit={(e) => { if (!confirm(`Mark ${registration.full_name} as deleted?`)) e.preventDefault(); }}>
+                  <form
+                    action={deleteAction}
+                    onSubmit={(e) => {
+                      if (!confirm(`Mark ${registration.full_name} as deleted?`)) e.preventDefault();
+                    }}
+                  >
                     <input type="hidden" name="id" value={registration.id} />
-                    <button type="submit" disabled={deletePending} className="rounded-lg px-3 py-1.5 text-xs font-medium text-error hover:bg-red-50 disabled:opacity-50">
+                    <button
+                      type="submit"
+                      disabled={deletePending}
+                      className="rounded-lg px-3 py-1.5 text-xs font-medium text-error hover:bg-red-50 disabled:opacity-50"
+                    >
                       Delete
                     </button>
                   </form>
@@ -276,9 +325,7 @@ export default function RegistrationsTable({
           </div>
         ))}
         {registrations.length === 0 && (
-          <div className="rounded-xl border border-border bg-card p-8 text-center text-sm text-muted">
-            No registrations found.
-          </div>
+          <div className="rounded-xl border border-border bg-card p-8 text-center text-sm text-muted">No registrations found.</div>
         )}
       </div>
 
@@ -300,7 +347,7 @@ export default function RegistrationsTable({
           </thead>
           <tbody className="divide-y divide-border">
             {registrations.map((registration) => (
-              <tr key={registration.id} className="hover:bg-background/30">
+              <tr key={registration.id} className={`hover:bg-background/30 border-l-4 ${getRowAccent(registration)}`}>
                 <td className="px-4 py-3">
                   <Link href={`/admin/registrations/${registration.id}`} className="font-medium text-foreground hover:text-gold">
                     {registration.full_name}
@@ -321,10 +368,17 @@ export default function RegistrationsTable({
                     <span className="flex items-center gap-1">
                       {registration.phone_number}
                       {registration.duplicate_phone && (
-                        <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-amber-100 text-[10px] font-bold text-amber-700" title="Duplicate phone number">!</span>
+                        <span
+                          className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-amber-100 text-[10px] font-bold text-amber-700"
+                          title="Duplicate phone number"
+                        >
+                          !
+                        </span>
                       )}
                     </span>
-                  ) : "—"}
+                  ) : (
+                    "—"
+                  )}
                 </td>
                 <td className="hidden px-4 py-3 text-muted xl:table-cell">{registration.invited_by || "—"}</td>
                 <td className="px-4 py-3">
@@ -342,7 +396,10 @@ export default function RegistrationsTable({
                 <td className="hidden px-4 py-3 text-muted lg:table-cell">{formatDate(registration.created_at)}</td>
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-1">
-                    <Link href={`/admin/registrations/${registration.id}`} className="rounded px-2 py-1 text-xs text-muted transition-colors hover:bg-background hover:text-foreground">
+                    <Link
+                      href={`/admin/registrations/${registration.id}`}
+                      className="rounded px-2 py-1 text-xs text-muted transition-colors hover:bg-background hover:text-foreground"
+                    >
                       View
                     </Link>
                     {!registration.deleted && (
@@ -354,7 +411,10 @@ export default function RegistrationsTable({
                             setDownloadingCode(registration.invite_code);
                             try {
                               const res = await fetch(`/api/invite/${registration.invite_code}`);
-                              if (!res.ok) { alert("Failed to generate invite"); return; }
+                              if (!res.ok) {
+                                alert("Failed to generate invite");
+                                return;
+                              }
                               const blob = await res.blob();
                               const url = URL.createObjectURL(blob);
                               const a = document.createElement("a");
@@ -362,11 +422,13 @@ export default function RegistrationsTable({
                               a.download = `${registration.full_name} - Invite.jpeg`;
                               a.click();
                               URL.revokeObjectURL(url);
-                            } finally { setDownloadingCode(null); }
+                            } finally {
+                              setDownloadingCode(null);
+                            }
                           }}
                           className="rounded px-2 py-1 text-xs text-gold-dark transition-colors hover:bg-gold-light disabled:opacity-50"
                         >
-                          {downloadingCode === registration.invite_code ? "..." : "Invite"}
+                          {downloadingCode === registration.invite_code ? "..." : "Download Invite"}
                         </button>
                         <button
                           type="button"
@@ -375,12 +437,29 @@ export default function RegistrationsTable({
                         >
                           Share
                         </button>
+                        <form action={inviteSentAction}>
+                          <input type="hidden" name="id" value={registration.id} />
+                          <input type="hidden" name="sent" value={registration.invite_sent ? "false" : "true"} />
+                          <button
+                            type="submit"
+                            disabled={inviteSentPending}
+                            className={`rounded px-2 py-1 text-xs transition-colors disabled:opacity-50 ${
+                              registration.invite_sent ? "text-green-700 hover:bg-green-50" : "text-muted hover:bg-background hover:text-foreground"
+                            }`}
+                          >
+                            {registration.invite_sent ? "✓ Sent" : "Sent?"}
+                          </button>
+                        </form>
                       </>
                     )}
                     {registration.deleted ? (
                       <form action={restoreAction}>
                         <input type="hidden" name="id" value={registration.id} />
-                        <button type="submit" disabled={restorePending} className="rounded px-2 py-1 text-xs font-medium text-green-700 transition-colors hover:bg-green-50 disabled:opacity-50">
+                        <button
+                          type="submit"
+                          disabled={restorePending}
+                          className="rounded px-2 py-1 text-xs font-medium text-green-700 transition-colors hover:bg-green-50 disabled:opacity-50"
+                        >
                           Restore
                         </button>
                       </form>
@@ -389,7 +468,11 @@ export default function RegistrationsTable({
                         {registration.attendance_confirmed && !registration.checked_in && (
                           <form action={checkInAction}>
                             <input type="hidden" name="id" value={registration.id} />
-                            <button type="submit" disabled={checkInPending} className="rounded px-2 py-1 text-xs text-green-600 transition-colors hover:bg-green-50 disabled:opacity-50">
+                            <button
+                              type="submit"
+                              disabled={checkInPending}
+                              className="rounded px-2 py-1 text-xs text-green-600 transition-colors hover:bg-green-50 disabled:opacity-50"
+                            >
                               Check In
                             </button>
                           </form>
@@ -397,13 +480,26 @@ export default function RegistrationsTable({
                         <form action={attendanceAction}>
                           <input type="hidden" name="id" value={registration.id} />
                           <input type="hidden" name="attendanceConfirmed" value={registration.attendance_confirmed ? "false" : "true"} />
-                          <button type="submit" disabled={attendancePending} className="rounded px-2 py-1 text-xs text-amber-700 transition-colors hover:bg-amber-50 disabled:opacity-50">
+                          <button
+                            type="submit"
+                            disabled={attendancePending}
+                            className="rounded px-2 py-1 text-xs text-amber-700 transition-colors hover:bg-amber-50 disabled:opacity-50"
+                          >
                             {registration.attendance_confirmed ? "Not Attending" : "To Attend"}
                           </button>
                         </form>
-                        <form action={deleteAction} onSubmit={(e) => { if (!confirm(`Mark ${registration.full_name} as deleted?`)) e.preventDefault(); }}>
+                        <form
+                          action={deleteAction}
+                          onSubmit={(e) => {
+                            if (!confirm(`Mark ${registration.full_name} as deleted?`)) e.preventDefault();
+                          }}
+                        >
                           <input type="hidden" name="id" value={registration.id} />
-                          <button type="submit" disabled={deletePending} className="rounded px-2 py-1 text-xs text-error transition-colors hover:bg-red-50 disabled:opacity-50">
+                          <button
+                            type="submit"
+                            disabled={deletePending}
+                            className="rounded px-2 py-1 text-xs text-error transition-colors hover:bg-red-50 disabled:opacity-50"
+                          >
                             Delete
                           </button>
                         </form>

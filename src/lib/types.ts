@@ -32,19 +32,16 @@ export interface Registration {
   invited_by: import("./event-options").InvitedBy | null;
   deleted: boolean;
   duplicate_phone: boolean;
+  invite_sent: boolean;
   created_at: string;
   updated_at: string;
 }
 
-export type RegistrationStatusFilter =
-  | "all"
-  | "checked_in"
-  | "not_checked_in"
-  | "unable"
-  | "deleted";
+export type RegistrationStatusFilter = "all" | "checked_in" | "not_checked_in" | "unable" | "deleted";
 
 export interface RegistrationListItem extends Registration {
   source_name: string | null;
+  source_phone: string | null;
 }
 
 export interface PaginatedRegistrations {

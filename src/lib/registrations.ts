@@ -6,7 +6,7 @@ import type { InvitedBy } from "./event-options";
 import type { DashboardStats, ExtraPerson, PaginatedRegistrations, Registration, RegistrationListItem, RegistrationStatusFilter } from "./types";
 
 const REGISTRATION_COLUMNS =
-  "id, full_name, phone_number, email, attendance_confirmed, invite_code, is_primary_attendee, linked_to_id, checked_in, checked_in_at, admin_notes, table_assignment, invited_by, deleted, duplicate_phone, created_at, updated_at";
+  "id, full_name, phone_number, email, attendance_confirmed, invite_code, is_primary_attendee, linked_to_id, checked_in, checked_in_at, admin_notes, table_assignment, invited_by, deleted, duplicate_phone, invite_sent, created_at, updated_at";
 
 const INVITE_CODE_RETRIES = 10;
 
@@ -112,18 +112,21 @@ export async function addRegistration(data: { full_name: string; phone_number: s
 async function attachSourceNames(registrations: Registration[]): Promise<RegistrationListItem[]> {
   const sourceIds = [...new Set(registrations.map((registration) => registration.linked_to_id).filter((id): id is string => Boolean(id)))];
   const sourceNames = new Map<string, string>();
+  const sourcePhones = new Map<string, string | null>();
 
   if (sourceIds.length > 0) {
-    const { data: sources, error } = await getSupabase().from("registrations").select("id, full_name").in("id", sourceIds);
+    const { data: sources, error } = await getSupabase().from("registrations").select("id, full_name, phone_number").in("id", sourceIds);
     if (error) throw databaseError("load source registrations", error.message);
     for (const source of sources ?? []) {
       sourceNames.set(source.id as string, source.full_name as string);
+      sourcePhones.set(source.id as string, (source.phone_number as string | null) ?? null);
     }
   }
 
   return registrations.map((registration) => ({
     ...registration,
     source_name: registration.linked_to_id ? (sourceNames.get(registration.linked_to_id) ?? null) : null,
+    source_phone: registration.linked_to_id ? (sourcePhones.get(registration.linked_to_id) ?? null) : null,
   }));
 }
 
@@ -405,6 +408,18 @@ export async function flagDuplicatePhone(registrationId: string, phoneNumber: st
   if ((count ?? 0) > 0) {
     await getSupabase().from("registrations").update({ duplicate_phone: true }).eq("id", registrationId);
   }
+}
+
+export async function setInviteSent(id: string, sent: boolean): Promise<boolean> {
+  const { data, error } = await getSupabase()
+    .from("registrations")
+    .update({ invite_sent: sent })
+    .eq("id", id)
+    .eq("deleted", false)
+    .select("id")
+    .maybeSingle();
+  if (error) throw databaseError("update invite sent", error.message);
+  return Boolean(data);
 }
 
 export async function setAttendanceConfirmed(id: string, attendanceConfirmed: boolean): Promise<boolean> {

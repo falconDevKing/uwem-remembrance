@@ -11,6 +11,7 @@ import {
   updateTableAssignment,
   updateInvitedBy,
   setAttendanceConfirmed,
+  setInviteSent,
   addRegistration,
   getTableOccupantCount,
   getRegistrationById,
@@ -263,6 +264,25 @@ export async function updateAttendanceAction(prevState: ActionResponse, formData
     success: true,
     message: attendanceConfirmed ? "Guest marked as attending." : "Guest marked as unable to attend.",
   };
+}
+
+export async function markInviteSentAction(prevState: ActionResponse, formData: FormData): Promise<ActionResponse> {
+  const session = await verifySession();
+  if (!session.authenticated || session.role !== "admin") redirect("/admin/login");
+
+  const id = formData.get("id") as string;
+  const sent = formData.get("sent") === "true";
+  try {
+    const success = await setInviteSent(id, sent);
+    if (!success) return { success: false, message: "Registration not found." };
+  } catch (error) {
+    console.error("Mark invite sent failed", error);
+    return { success: false, message: "Unable to update invite sent status." };
+  }
+
+  revalidatePath("/admin");
+  revalidatePath(`/admin/registrations/${id}`);
+  return { success: true, message: sent ? "Invite marked as sent." : "Invite marked as not sent." };
 }
 
 export async function createGuestAction(prevState: ActionResponse, formData: FormData): Promise<ActionResponse> {
