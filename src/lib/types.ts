@@ -37,7 +37,7 @@ export interface Registration {
   updated_at: string;
 }
 
-export type RegistrationStatusFilter = "all" | "checked_in" | "not_checked_in" | "unable" | "deleted";
+export type RegistrationStatusFilter = "all" | "checked_in" | "not_checked_in" | "unable" | "deleted" | "not_sent";
 
 export interface RegistrationListItem extends Registration {
   source_name: string | null;

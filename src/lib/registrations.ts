@@ -156,6 +156,9 @@ export async function getPaginatedRegistrations({
   if (searchTerm) {
     request = request.or(`full_name.ilike.%${searchTerm}%,phone_number.ilike.%${searchTerm}%`);
   }
+  if (status === "not_sent") {
+    request = request.eq("attendance_confirmed", true).eq("invite_sent", false);
+  }
   if (status === "checked_in") {
     request = request.eq("attendance_confirmed", true).eq("checked_in", true);
   }

@@ -21,7 +21,7 @@ function parsePage(value: string): number {
 }
 
 function parseStatus(value: string): RegistrationStatusFilter {
-  return value === "checked_in" || value === "not_checked_in" || value === "unable" || value === "deleted"
+  return value === "checked_in" || value === "not_checked_in" || value === "unable" || value === "deleted" || value === "not_sent"
     ? value
     : "all";
 }

@@ -14,11 +14,12 @@ function buildWhatsAppUrl(reg: RegistrationListItem): string {
     "",
     "You are warmly invited to the Remembrance Ceremony of Dr. (Mrs.) Uwem Oyekan.",
     "",
-    "*Date*: Saturday, July 4th, 2026",
-    "*Time*: 11:00 AM",
-    "*Venue*: Amen Event Center, Abesan Estate Gate, Ipaja, Lagos.",
+    "*📆Date*: Saturday, July 4th, 2026",
+    "*🕚Time*: 11:00 AM",
+    "*⛪Venue*: Amen Event Center, Abesan Estate Gate, Ipaja, Lagos.",
     "",
-    `Your personal access code is: _${reg.invite_code}_`,
+    "Your personal access code is:",
+    `*_${reg.invite_code}_*`,
     "",
     "Kindly present your personalised invite or access code to the access team upon arrival.",
     "",
@@ -27,6 +28,9 @@ function buildWhatsAppUrl(reg: RegistrationListItem): string {
     "",
     "",
     "We look forward to receiving you.",
+    "",
+    "",
+    "*✍️ On Behalf of the Oyekan Family*",
   ].join("\n");
 
   const encoded = encodeURIComponent(message);
@@ -110,7 +114,7 @@ export default function RegistrationsTable({
         />
 
         <div className="flex flex-wrap gap-2">
-          {(["all", "checked_in", "not_checked_in", "unable", "deleted"] as const).map((filter) => (
+          {(["all", "checked_in", "not_checked_in", "unable", "not_sent", "deleted"] as const).map((filter) => (
             <Link
               key={filter}
               href={adminHref({ page: 1, query, status: filter, withNotes })}
@@ -126,7 +130,9 @@ export default function RegistrationsTable({
                     ? "Not Checked In"
                     : filter === "unable"
                       ? "Not Attending"
-                      : "Deleted"}
+                      : filter === "not_sent"
+                        ? "Not Sent"
+                        : "Deleted"}
             </Link>
           ))}
           <Link
